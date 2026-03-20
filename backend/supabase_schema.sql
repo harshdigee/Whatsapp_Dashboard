@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS chats (
 CREATE TABLE IF NOT EXISTS messages (
   id         BIGSERIAL PRIMARY KEY,
   chat_id    TEXT NOT NULL REFERENCES chats(chat_id) ON DELETE CASCADE,
-  sender     TEXT NOT NULL CHECK (sender IN ('user', 'ai', 'human')),
+  sender     TEXT NOT NULL CHECK (sender IN ('user', 'ai', 'human', 'assistant')),
   message    TEXT NOT NULL,
   timestamp  TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW()

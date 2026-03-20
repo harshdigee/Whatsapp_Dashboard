@@ -18,17 +18,33 @@ const httpServer = http.createServer(app)
 initSocket(httpServer)
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
-app.use(
-  cors({
-    origin: [
-      process.env.FRONTEND_URL || 'http://localhost:5173',
-      'http://localhost:3000',
-    ],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-  })
-)
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:5173',
+  'http://localhost:3000',
+]
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin — n8n HTTP Request node, curl, Postman
+    if (!origin) return callback(null, true)
+    // Allow known frontend origins
+    if (allowedOrigins.includes(origin)) return callback(null, true)
+    // Allow all ngrok tunnels so n8n can reach the server regardless of tunnel URL
+    if (origin.endsWith('.ngrok-free.app') || origin.endsWith('.ngrok.io')) {
+      return callback(null, true)
+    }
+    console.warn(`🚫 CORS blocked origin: ${origin}`)
+    callback(new Error(`CORS: origin ${origin} not allowed`))
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}
+
+app.use(cors(corsOptions))
+
+// Handle preflight OPTIONS for every route (required by n8n and browsers)
+app.options('*', cors(corsOptions))
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

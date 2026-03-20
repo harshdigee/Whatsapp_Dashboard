@@ -100,7 +100,7 @@ const useChatStore = create(
         console.log('👁️ Marking chat as read:', chatId)
         try {
           // Call backend to mark as read
-          await fetch(`http://localhost:5000/api/chats/${chatId}/read`, {
+          await fetch(`http://localhost:5001/api/chats/${chatId}/read`, {
             method: 'POST'
           })
           

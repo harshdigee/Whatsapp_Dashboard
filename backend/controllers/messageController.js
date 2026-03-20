@@ -16,9 +16,9 @@ async function receiveMessage(req, res) {
       return res.status(400).json({ error: 'chatId, sender, and message are required' })
     }
 
-    if (!['user', 'ai', 'human'].includes(sender)) {
+    if (!['user', 'ai', 'human', 'assistant'].includes(sender)) {
       console.error('❌ Invalid sender:', sender)
-      return res.status(400).json({ error: 'sender must be "user", "ai", or "human"' })
+      return res.status(400).json({ error: 'sender must be "user", "ai", "human", or "assistant"' })
     }
 
     const messageTimestamp = timestamp || new Date().toISOString()
