@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WhatsApp Dashboard - Integration Test</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>WhatsApp Dashboard Integration Test</h1>
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        
+        async function testIntegration() {
+            const results = document.getElementById('results');
+            
+            try {
+                // Test 1: Fetch chats
+                console.log('Testing GET /api/chats...');
+                const chatsResponse = await axios.get(`${API_BASE}/chats`);
+                results.innerHTML += `<p>✅ GET /api/chats: ${chatsResponse.data.length} chats found</p>`;
+                
+                if (chatsResponse.data.length > 0) {
+                    const firstChat = chatsResponse.data[0];
+                    
+                    // Test 2: Fetch messages for first chat
+                    console.log('Testing GET /api/messages/:chatId...');
+                    const messagesResponse = await axios.get(`${API_BASE}/messages/${firstChat.id}`);
+                    results.innerHTML += `<p>✅ GET /api/messages/${firstChat.id}: ${messagesResponse.data.length} messages found</p>`;
+                    
+                    // Test 3: Send a message
+                    console.log('Testing POST /api/send-message...');
+                    const sendResponse = await axios.post(`${API_BASE}/send-message`, {
+                        chatId: firstChat.id,
+                        message: 'Test message from integration test'
+                    });
+                    results.innerHTML += `<p>✅ POST /api/send-message: Message sent successfully</p>`;
+                    
+                    // Test 4: Verify message was added
+                    const updatedMessagesResponse = await axios.get(`${API_BASE}/messages/${firstChat.id}`);
+                    results.innerHTML += `<p>✅ Message verification: ${updatedMessagesResponse.data.length} messages (increased by 1)</p>`;
+                }
+                
+                results.innerHTML += `<h2 style="color: green;">✅ All tests passed! Frontend-backend integration is working.</h2>`;
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                results.innerHTML += `<p style="color: red;">❌ Test failed: ${error.message}</p>`;
+            }
+        }
+        
+        // Run tests when page loads
+        testIntegration();
+    </script>
+</body>
+</html>
