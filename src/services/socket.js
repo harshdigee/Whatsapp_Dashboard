@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client'
+import { SOCKET_URL } from '../config/env'
 
-const socket = io('http://localhost:5001', {
+const socket = io(SOCKET_URL, {
   autoConnect: false,
 })
 
