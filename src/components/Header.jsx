@@ -2,7 +2,7 @@ import ModeToggle from './ModeToggle'
 import ThemeToggle from './ThemeToggle'
 import useChatStore from '../store/chatStore'
 
-export default function Header({ activeChat }) {
+export default function Header({ activeChat, onSignOut }) {
   const aiMode = useChatStore((s) => s.aiMode)
   const setAiMode = useChatStore((s) => s.setAiMode)
   const connectionStatus = useChatStore((s) => s.connectionStatus)
@@ -62,6 +62,15 @@ export default function Header({ activeChat }) {
       </div>
 
       <div className="flex items-center gap-2">
+        {typeof onSignOut === 'function' && (
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="rounded-xl px-2.5 py-1.5 text-[11px] font-medium text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          >
+            Sign out
+          </button>
+        )}
         <ModeToggle enabled={aiMode} onChange={setAiMode} />
         <ThemeToggle />
       </div>

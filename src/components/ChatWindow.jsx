@@ -18,7 +18,7 @@ function TypingIndicator() {
   )
 }
 
-export default function ChatWindow() {
+export default function ChatWindow({ onSignOut }) {
   const [draft, setDraft] = useState('')
   const messagesEndRef = useRef(null)
 
@@ -56,7 +56,19 @@ export default function ChatWindow() {
 
   if (!activeChat) {
     return (
-      <section className="flex h-full flex-1 flex-col items-center justify-center gap-4 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 text-center dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <section className="flex h-full flex-1 flex-col bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+        {typeof onSignOut === 'function' && (
+          <div className="flex shrink-0 justify-end border-b border-slate-200/80 bg-white/60 px-3 py-2 dark:border-slate-800 dark:bg-slate-950/60">
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="rounded-xl px-2.5 py-1.5 text-[11px] font-medium text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            >
+              Sign out
+            </button>
+          </div>
+        )}
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-500/10 text-3xl text-brand-500 shadow-sm">
           💬
         </div>
@@ -69,6 +81,7 @@ export default function ChatWindow() {
             to see the live conversation stream.
           </p>
         </div>
+        </div>
       </section>
     )
   }
@@ -77,7 +90,7 @@ export default function ChatWindow() {
 
   return (
     <section className="flex h-full flex-1 flex-col">
-      <Header activeChat={activeChat} />
+      <Header activeChat={activeChat} onSignOut={onSignOut} />
 
       <div className="flex-1 bg-gradient-to-b from-slate-50 to-slate-100/80 px-2 dark:from-slate-950 dark:to-slate-900">
         <div className="mx-auto flex h-full max-w-3xl flex-col">

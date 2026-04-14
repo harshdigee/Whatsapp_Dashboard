@@ -3,9 +3,9 @@ import Sidebar from '../components/Sidebar'
 import ChatWindow from '../components/ChatWindow'
 import ErrorBoundary from '../components/ErrorBoundary'
 import useChatStore from '../store/chatStore'
-import socket from '../services/socket'
+import socket, { prepareSocketAuth } from '../services/socket'
 
-export default function Dashboard() {
+export default function Dashboard({ onSignOut }) {
   const loadChats = useChatStore((s) => s.loadChats)
   const receiveMessage = useChatStore((s) => s.receiveMessage)
   const setTyping = useChatStore((s) => s.setTyping)
@@ -17,37 +17,40 @@ export default function Dashboard() {
   }, [loadChats])
 
   useEffect(() => {
+    let cancelled = false
     setConnectionStatus('connecting')
-    socket.connect()
 
-    socket.on('connect', () => {
-      setConnectionStatus('connected')
-    })
+    const onConnect = () => setConnectionStatus('connected')
+    const onDisconnect = () => setConnectionStatus('disconnected')
+    const onConnectError = () => setConnectionStatus('disconnected')
 
-    socket.on('disconnect', () => {
-      setConnectionStatus('disconnected')
-    })
-
-    socket.on('connect_error', () => {
-      setConnectionStatus('disconnected')
-    })
-
-    socket.on('new_message', (payload) => {
+    socket.on('connect', onConnect)
+    socket.on('disconnect', onDisconnect)
+    socket.on('connect_error', onConnectError)
+    const onNewMessage = (payload) => {
       if (!payload || !payload.chatId) return
       receiveMessage(payload.chatId, payload)
-    })
-
-    socket.on('typing', ({ chatId, typing }) => {
+    }
+    const onTyping = ({ chatId, typing }) => {
       if (!chatId) return
       setTyping(chatId, typing)
-    })
+    }
+
+    socket.on('new_message', onNewMessage)
+    socket.on('typing', onTyping)
+
+    void (async () => {
+      await prepareSocketAuth()
+      if (!cancelled) socket.connect()
+    })()
 
     return () => {
-      socket.off('connect')
-      socket.off('disconnect')
-      socket.off('connect_error')
-      socket.off('new_message')
-      socket.off('typing')
+      cancelled = true
+      socket.off('connect', onConnect)
+      socket.off('disconnect', onDisconnect)
+      socket.off('connect_error', onConnectError)
+      socket.off('new_message', onNewMessage)
+      socket.off('typing', onTyping)
       socket.disconnect()
     }
   }, [receiveMessage, setTyping, setConnectionStatus])
@@ -72,7 +75,7 @@ export default function Dashboard() {
                 </ErrorBoundary>
               </div>
               <ErrorBoundary>
-                <ChatWindow />
+                <ChatWindow onSignOut={onSignOut} />
               </ErrorBoundary>
             </div>
           </div>

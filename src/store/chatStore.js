@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { API_BASE_URL } from '../config/env'
+import { getAuthHeaders } from '../lib/supabase'
 import { fetchChats, fetchMessages, sendMessage as apiSendMessage } from '../services/api'
 
 const useChatStore = create(
@@ -101,8 +102,10 @@ const useChatStore = create(
         console.log('👁️ Marking chat as read:', chatId)
         try {
           // Call backend to mark as read
+          const headers = await getAuthHeaders()
           await fetch(`${API_BASE_URL}/chats/${chatId}/read`, {
-            method: 'POST'
+            method: 'POST',
+            headers,
           })
           
           // Refetch chats to get updated unread count
