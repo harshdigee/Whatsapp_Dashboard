@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { isEmailAllowed, parseAllowedEmails } from '../lib/allowedEmails'
 
 export function useAuth() {
   const [session, setSession] = useState(undefined) // undefined = not checked yet
@@ -8,16 +9,26 @@ export function useAuth() {
 
   useEffect(() => {
     let mounted = true
+    let warnedEmpty = false
 
-    // Multi-email: comma-separated list in VITE_ALLOWED_EMAILS
-    const allowedEmails = (import.meta.env.VITE_ALLOWED_EMAILS || '')
-      .split(',')
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean)
+    const raw = import.meta.env.VITE_ALLOWED_EMAILS ?? ''
+    const allowedEmails = parseAllowedEmails(raw)
+
+    if (import.meta.env.DEV && raw === '') {
+      console.warn(
+        '[auth] VITE_ALLOWED_EMAILS is not set. Add it to .env.local (comma-separated emails).'
+      )
+    }
 
     const checkAllowed = (user) => {
       if (!user?.email) return false
-      return allowedEmails.includes(user.email.toLowerCase())
+      if (allowedEmails.length === 0 && import.meta.env.PROD && !warnedEmpty) {
+        warnedEmpty = true
+        console.warn(
+          '[auth] Allowlist is empty in this build. Set VITE_ALLOWED_EMAILS in Vercel Project → Environment Variables for Production (and Preview if you use preview URLs), then redeploy. Railway ALLOWED_EMAILS does not apply to the browser bundle.'
+        )
+      }
+      return isEmailAllowed(user.email, allowedEmails)
     }
 
     supabase.auth
