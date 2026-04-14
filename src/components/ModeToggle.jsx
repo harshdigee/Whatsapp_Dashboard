@@ -1,28 +1,30 @@
-/* AI mode toggle: when ON, AI controls the conversation and input is disabled */
 export default function ModeToggle({ enabled, onChange }) {
   return (
     <button
       type="button"
       onClick={() => onChange(!enabled)}
-      className={`relative inline-flex items-center rounded-full px-1 py-0.5 text-xs font-medium transition-colors ${
-        enabled
-          ? 'bg-brand-500 text-white shadow-sm'
-          : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
-      }`}
+      className="flex h-9 items-center gap-0 rounded-full bg-slate-200 p-0.5 shadow-inner dark:bg-[#30363d]"
+      aria-pressed={enabled}
+      aria-label={enabled ? 'AI mode on' : 'Manual mode'}
     >
       <span
-        className={`inline-flex items-center gap-1 rounded-full px-2 py-1 transition-transform ${
-          enabled ? 'translate-x-4' : 'translate-x-0'
+        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+          !enabled
+            ? 'bg-white text-slate-900 shadow dark:bg-[#21262d] dark:text-white'
+            : 'text-slate-500 dark:text-slate-400'
         }`}
       >
-        <span
-          className={`h-2 w-2 rounded-full ${
-            enabled ? 'bg-emerald-300' : 'bg-slate-400'
-          }`}
-        />
-        <span>{enabled ? 'AI mode' : 'Manual'}</span>
+        Manual
+      </span>
+      <span
+        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+          enabled
+            ? 'bg-[#0f3460] text-white shadow'
+            : 'text-slate-500 dark:text-slate-400'
+        }`}
+      >
+        AI
       </span>
     </button>
   )
 }
-

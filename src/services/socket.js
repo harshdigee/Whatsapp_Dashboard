@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client'
 import { SOCKET_URL } from '../config/env'
-import { getAuthHeaders } from '../lib/supabase'
+import { getAuthHeaders } from './api'
 
 const socket = io(SOCKET_URL, {
   autoConnect: false,

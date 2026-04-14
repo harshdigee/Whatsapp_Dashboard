@@ -17,7 +17,7 @@ body,
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-  @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50;
+  @apply bg-[#f0f2f5] text-slate-900 antialiased dark:bg-[#0d1117] dark:text-slate-50;
 }
 
 /* Smooth scrollbars */

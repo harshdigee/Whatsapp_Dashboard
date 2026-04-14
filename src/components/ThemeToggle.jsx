@@ -5,8 +5,6 @@ export default function ThemeToggle() {
   const theme = useChatStore((s) => s.theme)
   const setTheme = useChatStore((s) => s.setTheme)
 
-  // Apply Tailwind dark class based on theme from Zustand.
-  // Persistence is already handled by the store middleware.
   useEffect(() => {
     const root = document.documentElement
     if (theme === 'dark') {
@@ -22,16 +20,10 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-brand-300 hover:text-brand-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-brand-500"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg text-amber-500 shadow-sm transition hover:bg-slate-50 dark:border-[#30363d] dark:bg-[#21262d] dark:text-amber-300 dark:hover:bg-[#30363d]"
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {isDark ? (
-        <span className="text-lg leading-none">☾</span>
-      ) : (
-        <span className="text-lg leading-none">☀︎</span>
-      )}
+      {isDark ? <span aria-hidden>☾</span> : <span aria-hidden>☀</span>}
     </button>
   )
 }
-
-

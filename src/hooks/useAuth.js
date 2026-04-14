@@ -1,65 +1,58 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 export function useAuth() {
-  const [session, setSession] = useState(null)
-  const [user, setUser] = useState(null)
+  const [session, setSession] = useState(undefined) // undefined = not checked yet
   const [isAllowed, setIsAllowed] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const checkAllowed = useCallback(async (email) => {
-    if (!email) {
-      setIsAllowed(false)
-      return
-    }
-    const { data, error } = await supabase
-      .from('allowed_users')
-      .select('email')
-      .eq('email', email)
-      .single()
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('allowed_users check:', error)
-    }
-    setIsAllowed(Boolean(data && !error))
-  }, [])
-
   useEffect(() => {
-    let cancelled = false
+    let mounted = true
 
-    const syncAuth = async (nextSession) => {
-      setSession(nextSession)
-      setUser(nextSession?.user ?? null)
-      if (nextSession?.user?.email) {
-        await checkAllowed(nextSession.user.email)
-      } else {
-        setIsAllowed(false)
-      }
-      if (!cancelled) setLoading(false)
+    // Multi-email: comma-separated list in VITE_ALLOWED_EMAILS
+    const allowedEmails = (import.meta.env.VITE_ALLOWED_EMAILS || '')
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean)
+
+    const checkAllowed = (user) => {
+      if (!user?.email) return false
+      return allowedEmails.includes(user.email.toLowerCase())
     }
 
-    supabase.auth.getSession().then(({ data: { session: initial } }) => {
-      if (cancelled) return
-      syncAuth(initial)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (!mounted) return
+        setSession(session)
+        setIsAllowed(checkAllowed(session?.user))
+        setLoading(false)
+      })
+      .catch(() => {
+        if (!mounted) return
+        setSession(null)
+        setIsAllowed(false)
+        setLoading(false)
+      })
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
-      if (cancelled) return
-      setLoading(true)
-      await syncAuth(nextSession)
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return
+      setSession(session)
+      setIsAllowed(checkAllowed(session?.user))
     })
 
     return () => {
-      cancelled = true
+      mounted = false
       subscription.unsubscribe()
     }
-  }, [checkAllowed])
-
-  const signOut = useCallback(async () => {
-    await supabase.auth.signOut()
   }, [])
 
-  return { session, user, isAllowed, loading, signOut }
+  const signOut = async () => {
+    await supabase.auth.signOut()
+    window.location.href = '/'
+  }
+
+  return { session, user: session?.user, isAllowed, loading, signOut }
 }

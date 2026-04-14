@@ -1,76 +1,118 @@
+import { memo, useMemo, useState } from 'react'
 import useChatStore from '../store/chatStore'
 
-function ChatSkeleton() {
-  return (
-    <div className="flex items-center gap-3 rounded-xl bg-slate-100/80 p-3 dark:bg-slate-800/60">
-      <div className="h-9 w-9 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
-      <div className="flex-1 space-y-2">
-        <div className="h-3 w-24 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
-        <div className="h-3 w-32 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
-      </div>
-    </div>
-  )
+const AVATAR_COLORS = [
+  '#0f3460',
+  '#e94560',
+  '#533483',
+  '#0f7173',
+  '#b5179e',
+  '#7209b7',
+]
+
+function hashToColor(id) {
+  const s = String(id ?? '')
+  let h = 0
+  for (let i = 0; i < s.length; i++) {
+    h = (h * 31 + s.charCodeAt(i)) >>> 0
+  }
+  return AVATAR_COLORS[h % AVATAR_COLORS.length]
 }
 
-function ChatItem({ chat, active, onClick }) {
-  const initials =
-    chat.name?.charAt(0)?.toUpperCase() ||
-    chat.phone?.slice(-2) ||
-    '?'
+function initialsFor(chat) {
+  const name = chat.name || chat.phone || chat.id || '?'
+  const parts = String(name).trim().split(/\s+/)
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).slice(0, 2).toUpperCase()
+  }
+  return String(name).slice(0, 2).toUpperCase()
+}
+
+const ChatItem = memo(function ChatItem({ chat, active, onClick, avatarBg }) {
+  const displayName = chat.name || chat.phone || chat.id
+  const last =
+    chat.lastMessage ?? chat.last_message ?? 'No messages yet'
+  const lastAt = chat.lastMessageAt ?? chat.last_timestamp
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left text-sm transition-all ${
+      className={`flex h-[72px] w-full shrink-0 items-center gap-3 px-4 py-3 text-left transition-colors ${
         active
-          ? 'border-brand-400 bg-brand-50 text-brand-900 shadow-sm dark:border-brand-500/70 dark:bg-brand-500/10 dark:text-brand-50'
-          : 'border-transparent bg-white text-slate-800 shadow-sm hover:border-brand-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-brand-500/40 dark:hover:bg-slate-800'
+          ? 'border-l-[3px] border-[#0f3460] bg-[#16213e]'
+          : 'border-l-[3px] border-transparent hover:bg-white/5'
       }`}
     >
-      <div className="relative">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500 text-xs font-semibold text-white shadow-sm">
-          {initials}
+      <div className="relative shrink-0">
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold text-white shadow-md"
+          style={{ backgroundColor: avatarBg }}
+        >
+          {initialsFor(chat)}
         </div>
         {chat.online && (
-          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400 shadow-sm dark:border-slate-900" />
+          <span
+            className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#1a1a2e] bg-[#22c55e]"
+            aria-hidden
+          />
         )}
       </div>
-      <div className="min-w-0 flex-1 space-y-0.5">
-        <div className="flex items-center justify-between gap-1">
-          <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-            {chat.name || chat.phone}
-          </p>
-          {chat.lastMessageAt && (
-            <span className="shrink-0 text-[10px] text-slate-400 dark:text-slate-500">
-              {new Date(chat.lastMessageAt).toLocaleTimeString([], {
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <p className="truncate text-[14px] font-bold text-[#e2e8f0]">{displayName}</p>
+          {lastAt && (
+            <span className="shrink-0 text-[11px] text-slate-400">
+              {new Date(lastAt).toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
             </span>
           )}
         </div>
-        <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-          {chat.lastMessage || 'No messages yet'}
-        </p>
+        <p className="mt-0.5 truncate text-[12px] text-slate-400">{last}</p>
       </div>
       {chat.unreadCount > 0 && (
-        <span className="ml-1 inline-flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-semibold text-white shadow-sm">
-          {chat.unreadCount}
+        <span className="flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-bold text-white">
+          {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
         </span>
       )}
     </button>
   )
+})
+
+function ChatSkeleton() {
+  return (
+    <div className="flex h-[72px] animate-pulse items-center gap-3 px-4">
+      <div className="h-12 w-12 shrink-0 rounded-full bg-white/10" />
+      <div className="flex-1 space-y-2">
+        <div className="h-3 w-28 rounded-full bg-white/10" />
+        <div className="h-2.5 w-36 rounded-full bg-white/5" />
+      </div>
+    </div>
+  )
 }
 
-export default function Sidebar() {
+export default function Sidebar({ onSignOut }) {
   const rawChats = useChatStore((state) => state.chats)
   const selectedChatId = useChatStore((state) => state.selectedChatId)
   const selectChat = useChatStore((state) => state.selectChat)
   const clearUnread = useChatStore((state) => state.clearUnread)
   const loadingChats = useChatStore((state) => state.loadingChats)
 
-  const chats = Array.isArray(rawChats) ? rawChats : []
+  const [query, setQuery] = useState('')
+
+  const filtered = useMemo(() => {
+    const list = Array.isArray(rawChats) ? rawChats : []
+    const q = query.trim().toLowerCase()
+    if (!q) return list
+    return list.filter((c) => {
+      const name = String(c.name || '').toLowerCase()
+      const phone = String(c.phone || '').toLowerCase()
+      const id = String(c.id || '').toLowerCase()
+      return name.includes(q) || phone.includes(q) || id.includes(q)
+    })
+  }, [rawChats, query])
 
   const handleSelect = async (id) => {
     await selectChat(id)
@@ -78,49 +120,70 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex h-full flex-col gap-3 border-r border-slate-200 bg-slate-50/60 p-3 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/30">
-      <div className="px-1">
-        <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Chats
-        </label>
-        <div className="mt-1 flex items-center rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-500 shadow-sm ring-0 transition focus-within:border-brand-400 focus-within:ring-1 focus-within:ring-brand-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:focus-within:border-brand-500 dark:focus-within:ring-brand-500/70">
-          <span className="mr-1.5 text-slate-400">⌕</span>
+    <aside className="flex h-full w-full shrink-0 flex-col overflow-hidden bg-[#1a1a2e] text-[#e2e8f0] md:w-[320px] md:min-w-[320px]">
+      <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-white/10 px-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0f3460] text-sm font-bold text-white">
+            WA
+          </div>
+          <span className="truncate text-sm font-semibold text-[#e2e8f0]">
+            WhatsApp Dashboard
+          </span>
+        </div>
+        {typeof onSignOut === 'function' && (
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="shrink-0 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"
+          >
+            Sign out
+          </button>
+        )}
+      </div>
+
+      <div className="shrink-0 border-b border-white/10 px-3 py-3">
+        <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2.5 ring-1 ring-white/10 focus-within:ring-[#0f3460]">
+          <span className="text-slate-400" aria-hidden>
+            🔍
+          </span>
           <input
-            type="text"
-            placeholder="Search name or number"
-            className="w-full border-none bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search contacts..."
+            className="w-full border-0 bg-transparent text-sm text-[#e2e8f0] placeholder:text-slate-500 focus:outline-none focus:ring-0"
           />
         </div>
       </div>
 
-      <div className="relative flex-1 overflow-hidden">
-        <div className="absolute inset-0 overflow-y-auto space-y-2 pr-1 pt-1">
-          {loadingChats && (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, idx) => (
-                <ChatSkeleton key={idx} />
-              ))}
-            </div>
-          )}
-
-          {!loadingChats && chats.length === 0 && (
-            <div className="mt-10 rounded-2xl border border-dashed border-slate-200 bg-white/60 p-4 text-center text-xs text-slate-400 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-500">
-              Waiting for WhatsApp conversations…
-            </div>
-          )}
-
-          {!loadingChats &&
-            chats.map((chat) => (
-              <ChatItem
-                key={chat.id}
-                chat={chat}
-                active={chat.id === selectedChatId}
-                onClick={() => handleSelect(chat.id)}
-              />
+      <div className="min-h-0 flex-1 overflow-y-auto scroll-smooth">
+        {loadingChats && (
+          <div className="space-y-1 py-2">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <ChatSkeleton key={idx} />
             ))}
-        </div>
+          </div>
+        )}
+
+        {!loadingChats && filtered.length === 0 && (
+          <div className="px-4 py-10 text-center text-xs text-slate-500">
+            {!Array.isArray(rawChats) || rawChats.length === 0
+              ? 'Waiting for WhatsApp conversations…'
+              : 'No contacts match your search.'}
+          </div>
+        )}
+
+        {!loadingChats &&
+          filtered.map((chat) => (
+            <ChatItem
+              key={chat.id}
+              chat={chat}
+              active={chat.id === selectedChatId}
+              avatarBg={hashToColor(chat.id)}
+              onClick={() => handleSelect(chat.id)}
+            />
+          ))}
       </div>
     </aside>
   )
 }
-
