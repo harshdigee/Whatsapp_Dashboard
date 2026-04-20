@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import useChatStore from '../store/chatStore'
 import MessageBubble from './MessageBubble'
 import Header from './Header'
+import { formatDate } from '../utils/formatTime'
 
 function TypingIndicator() {
   return (
@@ -18,7 +19,26 @@ function TypingIndicator() {
   )
 }
 
-export default function ChatWindow({ onSignOut }) {
+function DateSeparator({ timestamp }) {
+  return (
+    <div style={{ textAlign: 'center', margin: '16px 0', fontSize: '11px', color: '#888' }}>
+      <span style={{ background: '#e2e8f0', padding: '4px 12px', borderRadius: '12px' }}>
+        {formatDate(timestamp)}
+      </span>
+    </div>
+  )
+}
+
+function getDateKey(timestamp) {
+  if (!timestamp) return ''
+  try {
+    return new Date(timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+  } catch {
+    return ''
+  }
+}
+
+export default function ChatWindow({ onSignOut, onOpenSidebar }) {
   const [draft, setDraft] = useState('')
   const messagesEndRef = useRef(null)
   const scrollRef = useRef(null)
@@ -54,6 +74,7 @@ export default function ChatWindow({ onSignOut }) {
   if (!activeChat) {
     return (
       <section className="flex h-full min-h-0 flex-1 flex-col bg-[#f0f2f5] dark:bg-[#0d1117]">
+        <Header activeChat={null} onSignOut={onSignOut} onOpenSidebar={onOpenSidebar} />
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-[#0f3460]/15 text-4xl text-[#0f3460] dark:bg-[#0f3460]/30 dark:text-[#93c5fd]">
             💬
@@ -73,20 +94,38 @@ export default function ChatWindow({ onSignOut }) {
 
   const isTypingHere = typingChatId === selectedChatId
 
+  // Build message list with date separators injected between days
+  const messageItems = []
+  let lastDateKey = ''
+  for (let idx = 0; idx < messages.length; idx++) {
+    const m = messages[idx]
+    const dateKey = getDateKey(m.timestamp)
+    if (dateKey && dateKey !== lastDateKey) {
+      messageItems.push({ type: 'date', key: `date-${dateKey}-${idx}`, timestamp: m.timestamp })
+      lastDateKey = dateKey
+    }
+    messageItems.push({ type: 'message', key: m.id || `${m.timestamp}-${idx}`, message: m })
+  }
+
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col bg-[#f0f2f5] dark:bg-[#0d1117]">
-      <Header activeChat={activeChat} onSignOut={onSignOut} />
+      <Header activeChat={activeChat} onSignOut={onSignOut} onOpenSidebar={onOpenSidebar} />
 
       <div
         ref={scrollRef}
         className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto scroll-smooth py-5"
       >
-        {messages.map((m, idx) => (
-          <MessageBubble
-            key={m.id || `${m.timestamp}-${idx}`}
-            message={m}
-          />
-        ))}
+        {messageItems.map((item) =>
+          item.type === 'date' ? (
+            <DateSeparator key={item.key} timestamp={item.timestamp} />
+          ) : (
+            <MessageBubble
+              key={item.key}
+              message={item.message}
+              isMobile={false}
+            />
+          )
+        )}
         {isTypingHere && <TypingIndicator />}
         <div ref={messagesEndRef} />
       </div>

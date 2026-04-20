@@ -1,5 +1,6 @@
 import { memo, useMemo, useState } from 'react'
 import useChatStore from '../store/chatStore'
+import { formatTime } from '../utils/formatTime'
 
 const AVATAR_COLORS = [
   '#0f3460',
@@ -63,14 +64,13 @@ const ChatItem = memo(function ChatItem({ chat, active, onClick, avatarBg }) {
           <p className="truncate text-[14px] font-bold text-[#e2e8f0]">{displayName}</p>
           {lastAt && (
             <span className="shrink-0 text-[11px] text-slate-400">
-              {new Date(lastAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {formatTime(lastAt)}
             </span>
           )}
         </div>
-        <p className="mt-0.5 truncate text-[12px] text-slate-400">{last}</p>
+        <p className="mt-0.5 w-full truncate text-[12px] text-slate-400">
+          {last}
+        </p>
       </div>
       {chat.unreadCount > 0 && (
         <span className="flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-bold text-white">
@@ -93,7 +93,7 @@ function ChatSkeleton() {
   )
 }
 
-export default function Sidebar({ onSignOut }) {
+export default function Sidebar({ onSignOut, onChatSelect }) {
   const rawChats = useChatStore((state) => state.chats)
   const selectedChatId = useChatStore((state) => state.selectedChatId)
   const selectChat = useChatStore((state) => state.selectChat)
@@ -117,10 +117,11 @@ export default function Sidebar({ onSignOut }) {
   const handleSelect = async (id) => {
     await selectChat(id)
     clearUnread(id)
+    if (typeof onChatSelect === 'function') onChatSelect(id)
   }
 
   return (
-    <aside className="flex h-full w-full shrink-0 flex-col overflow-hidden bg-[#1a1a2e] text-[#e2e8f0] md:w-[320px] md:min-w-[320px]">
+    <aside className="flex h-full w-full flex-col overflow-hidden bg-[#1a1a2e] text-[#e2e8f0]">
       <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-white/10 px-4">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0f3460] text-sm font-bold text-white">
