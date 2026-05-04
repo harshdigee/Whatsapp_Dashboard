@@ -20,30 +20,41 @@ export default function ChatbotScreen({ onSignOut }) {
   const loadSessions = useCallback(async () => {
     setLoadingSessions(true)
     try {
-      const { data, error } = await chatbotSupabase
-        .from('chat_sessions')
-        .select(`
-          *,
-          messages(id, content, created_at)
-        `)
-        .order('created_at', { ascending: false })
+      // Fetch sessions and messages as two flat queries — avoids relying on
+      // PostgREST foreign-key relationship being explicitly configured
+      const [sessionsResult, messagesResult] = await Promise.all([
+        chatbotSupabase
+          .from('chat_sessions')
+          .select('id, visitor_id, created_at, expires_at')
+          .order('created_at', { ascending: false }),
+        chatbotSupabase
+          .from('messages')
+          .select('id, session_id, content, created_at')
+          .order('created_at', { ascending: false }),
+      ])
 
-      if (error) {
-        console.error('Error fetching chatbot sessions:', error)
+      if (sessionsResult.error) {
+        console.error('Error fetching chatbot sessions:', sessionsResult.error)
         setSessions([])
         return
       }
 
-      const enriched = (data || []).map((session) => {
-        const msgs = Array.isArray(session.messages) ? session.messages : []
-        const sorted = [...msgs].sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        )
+      const allMessages = messagesResult.data || []
+
+      // Group messages by session_id for O(n) lookup
+      const msgsBySession = {}
+      for (const msg of allMessages) {
+        if (!msgsBySession[msg.session_id]) msgsBySession[msg.session_id] = []
+        msgsBySession[msg.session_id].push(msg)
+      }
+
+      const enriched = (sessionsResult.data || []).map((session) => {
+        const msgs = msgsBySession[session.id] || []
+        // msgs are already ordered desc from the query
         return {
           ...session,
           message_count: msgs.length,
-          last_message: sorted[0]?.content ?? null,
-          messages: undefined,
+          last_message: msgs[0]?.content ?? null,
         }
       })
 
