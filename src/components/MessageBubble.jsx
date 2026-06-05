@@ -67,7 +67,29 @@ function MessageBubbleInner({ message, isMobile }) {
           boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
         }}
       >
-        {text}
+        {message.message_type === 'audio' ? (
+          <>
+            <audio
+              controls
+              src={message.audio_url}
+              style={{ width: '100%', maxWidth: '280px', borderRadius: '8px' }}
+            />
+            {message.transcript && (
+              <p
+                style={{
+                  margin: '6px 0 0',
+                  fontSize: '12px',
+                  fontStyle: 'italic',
+                  color: '#9ca3af',
+                }}
+              >
+                🎤 &ldquo;{message.transcript}&rdquo;
+              </p>
+            )}
+          </>
+        ) : (
+          text
+        )}
       </div>
 
       <span
