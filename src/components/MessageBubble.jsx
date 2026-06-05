@@ -89,7 +89,7 @@ function MessageBubbleInner({ message, isMobile }) {
             )}
           </div>
         ) : (
-          <span>{message.message}</span>
+          <span>{text}</span>
         )}
       </div>
 
