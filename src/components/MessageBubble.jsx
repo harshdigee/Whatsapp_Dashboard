@@ -7,14 +7,6 @@ function getSender(message) {
 }
 
 function MessageBubbleInner({ message, isMobile }) {
-  console.log('[MessageBubble] message fields:', {
-    message_type: message.message_type,
-    audio_url: message.audio_url,
-    transcript: message.transcript,
-    message: message.message,
-    content: message.content,
-  })
-
   const sender = getSender(message)
   const isUser = sender === 'user'
   const isAi = sender === 'ai' || sender === 'assistant'
@@ -87,6 +79,19 @@ function MessageBubbleInner({ message, isMobile }) {
                 🎤 {message.transcript}
               </span>
             )}
+          </div>
+        ) : message.message_type === 'image' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <img
+              src={message.image_url}
+              alt="Message image"
+              style={{
+                maxWidth: '280px',
+                maxHeight: '320px',
+                borderRadius: '8px',
+                objectFit: 'cover',
+              }}
+            />
           </div>
         ) : (
           <span>{text}</span>
