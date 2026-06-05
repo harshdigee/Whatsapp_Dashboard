@@ -7,6 +7,14 @@ function getSender(message) {
 }
 
 function MessageBubbleInner({ message, isMobile }) {
+  console.log('[MessageBubble] message fields:', {
+    message_type: message.message_type,
+    audio_url: message.audio_url,
+    transcript: message.transcript,
+    message: message.message,
+    content: message.content,
+  })
+
   const sender = getSender(message)
   const isUser = sender === 'user'
   const isAi = sender === 'ai' || sender === 'assistant'
@@ -74,12 +82,14 @@ function MessageBubbleInner({ message, isMobile }) {
               src={message.audio_url}
               style={{ width: '260px', height: '40px' }}
             />
-            <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>
-              🎤 {message.transcript}
-            </span>
+            {message.transcript && (
+              <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>
+                🎤 {message.transcript}
+              </span>
+            )}
           </div>
         ) : (
-          text
+          <span>{message.message}</span>
         )}
       </div>
 
