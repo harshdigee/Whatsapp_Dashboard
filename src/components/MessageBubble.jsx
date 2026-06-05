@@ -1,5 +1,47 @@
-import { memo } from 'react'
+import { memo, useState, useEffect } from 'react'
 import { formatTime } from '../utils/formatTime'
+
+function AudioPlayer({ src }) {
+  const [blobUrl, setBlobUrl] = useState(null)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    if (!src) return
+    let objectUrl = null
+    fetch(src)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.blob()
+      })
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob)
+        setBlobUrl(objectUrl)
+      })
+      .catch(() => setError(true))
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [src])
+
+  if (error) {
+    return (
+      <a
+        href={src}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ fontSize: '13px', color: '#4f9cf9' }}
+      >
+        🎵 Open audio file
+      </a>
+    )
+  }
+  if (!blobUrl) {
+    return <span style={{ fontSize: '12px', color: '#888' }}>Loading audio…</span>
+  }
+  return (
+    <audio controls src={blobUrl} style={{ width: '260px', height: '40px' }} />
+  )
+}
 
 function getSender(message) {
   const s = message.sender || message.from
@@ -69,11 +111,7 @@ function MessageBubbleInner({ message, isMobile }) {
       >
         {message.message_type === 'audio' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <audio
-              controls
-              src={message.audio_url}
-              style={{ width: '260px', height: '40px' }}
-            />
+            <AudioPlayer src={message.audio_url} />
             {message.transcript && (
               <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>
                 🎤 {message.transcript}
