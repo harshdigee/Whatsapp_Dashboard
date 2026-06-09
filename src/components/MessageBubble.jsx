@@ -77,25 +77,26 @@ function MessageBubbleInner({ message, isMobile }) {
           boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
         }}
       >
-        {message.message_type === 'audio' ? (
+        {message.message_type === 'image' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <img
+              src={message.image_url}
+              alt="User image"
+              style={{ width: '260px', borderRadius: '8px', display: 'block' }}
+              onError={(e) => { e.target.style.display = 'none' }}
+            />
+            {message.image_analysis && (
+              <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>
+                🖼️ {message.image_analysis}
+              </span>
+            )}
+          </div>
+        ) : message.message_type === 'audio' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <AudioPlayer src={message.audio_url} />
             {message.transcript && (
               <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>
                 🎤 {message.transcript}
-              </span>
-            )}
-          </div>
-        ) : message.message_type === 'image' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <img
-              src={message.image_url}
-              style={{ width: '260px', borderRadius: '8px' }}
-              alt="User image"
-            />
-            {message.image_analysis && (
-              <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>
-                🖼️ {message.image_analysis}
               </span>
             )}
           </div>
