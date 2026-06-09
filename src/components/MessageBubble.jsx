@@ -79,11 +79,16 @@ function MessageBubbleInner({ message, isMobile }) {
       >
         {message.message_type === 'image' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {(() => { console.log('[IMG MESSAGE]', JSON.stringify(message)) })()}
             <img
               src={message.image_url}
               alt="User image"
               style={{ width: '260px', borderRadius: '8px', display: 'block' }}
-              onError={(e) => { e.target.style.display = 'none' }}
+              onError={(e) => {
+                console.error('[IMG LOAD FAIL] src=', e.target.src)
+                e.target.style.display = 'none'
+              }}
+              onLoad={() => console.log('[IMG LOAD OK] src=', message.image_url)}
             />
             {message.image_analysis && (
               <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>
