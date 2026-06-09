@@ -7,6 +7,31 @@ import {
   fetchWithAuth,
   sendMessage as apiSendMessage,
 } from '../services/api'
+import { supabase } from '../lib/supabase'
+
+// Enrich image messages with image_url + image_analysis from Supabase
+async function enrichMessages(messages) {
+  const imageMessages = messages.filter(
+    (m) => m.message_type === 'image' && (!m.image_url || !m.image_analysis)
+  )
+  if (imageMessages.length === 0) return messages
+
+  const ids = imageMessages.map((m) => m.id)
+  const { data } = await supabase
+    .from('messages')
+    .select('id, image_url, image_analysis')
+    .in('id', ids)
+
+  if (!data || data.length === 0) return messages
+
+  const enrichMap = Object.fromEntries(data.map((r) => [r.id, r]))
+  return messages.map((m) => {
+    if (m.message_type === 'image' && enrichMap[m.id]) {
+      return { ...m, ...enrichMap[m.id] }
+    }
+    return m
+  })
+}
 
 const useChatStore = create(
   persist(
@@ -36,8 +61,9 @@ const useChatStore = create(
 
         try {
           const res = await fetchMessages(chatId)
-          console.log('✅ Messages loaded from backend:', res.data)
-          set({ messages: res.data })
+          const enriched = await enrichMessages(res.data)
+          console.log('✅ Messages loaded from backend:', enriched)
+          set({ messages: enriched })
         } catch (error) {
           console.error('❌ Failed to load messages:', error)
           set({ messages: [] })
@@ -74,8 +100,9 @@ const useChatStore = create(
 
           // Refetch messages from backend to get updated state
           const res = await fetchMessages(chatId)
-          console.log('✅ Messages refetched after send:', res.data)
-          set({ messages: res.data })
+          const enriched = await enrichMessages(res.data)
+          console.log('✅ Messages refetched after send:', enriched)
+          set({ messages: enriched })
 
           // Refetch chats to update chat list
           const chatsRes = await fetchChats()
