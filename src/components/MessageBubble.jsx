@@ -90,14 +90,14 @@ function MessageBubbleInner({ message, isMobile }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <img
               src={message.image_url}
-              alt="Message image"
-              style={{
-                maxWidth: '280px',
-                maxHeight: '320px',
-                borderRadius: '8px',
-                objectFit: 'cover',
-              }}
+              style={{ width: '260px', borderRadius: '8px' }}
+              alt="User image"
             />
+            {message.image_analysis && (
+              <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>
+                🖼️ {message.image_analysis}
+              </span>
+            )}
           </div>
         ) : (
           <span>{text}</span>
